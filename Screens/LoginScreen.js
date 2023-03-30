@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import * as Font from "expo-font";
 import AppLoading from "expo-app-loading";
 import {
@@ -12,6 +12,7 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  Dimensions,
 } from "react-native";
 
 const loadFonts = async () => {
@@ -22,11 +23,30 @@ const loadFonts = async () => {
 };
 
 const image = require("../assets/img/bg.png");
+
+const windowDimensions = Dimensions.get("window");
+const screenDimensions = Dimensions.get("screen");
+
 export const LoginScreen = () => {
   const [isReady, setIsReady] = useState(false);
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [secureText, setSecureText] = useState(true);
+  const [dimensions, setDimensions] = useState({
+    window: windowDimensions,
+    screen: screenDimensions,
+  });
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener(
+      "change",
+      ({ window, screen }) => {
+        setDimensions({ window, screen });
+      }
+    );
+    return () => subscription?.remove();
+  }, []);
 
   const passwordHandler = (text) => setPassword(text);
   const emailHandler = (text) => setEmail(text);
@@ -45,6 +65,10 @@ export const LoginScreen = () => {
     keyboardHandler();
   };
 
+  const onHiddenPassword = () => {
+    setSecureText(!secureText);
+  };
+
   if (!isReady) {
     return (
       <AppLoading
@@ -60,6 +84,7 @@ export const LoginScreen = () => {
         <ImageBackground source={image} style={styles.image}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={-134}
           >
             <View
               style={{
@@ -67,7 +92,7 @@ export const LoginScreen = () => {
                 paddingBottom: isShowKeyboard ? 32 : 144,
               }}
             >
-              <Text style={styles.title}>Ввійти</Text>
+              <Text style={styles.title}>Увійти</Text>
               <View style={{ marginTop: 16 }}>
                 <TextInput
                   style={styles.input}
@@ -85,8 +110,18 @@ export const LoginScreen = () => {
                   onChangeText={passwordHandler}
                   onFocus={() => setIsShowKeyboard(true)}
                   placeholder="Пароль"
-                  secureTextEntry={true}
+                  secureTextEntry={secureText}
                 />
+                <TouchableOpacity
+                  style={styles.btnPassword}
+                  onPress={onHiddenPassword}
+                >
+                  {secureText ? (
+                    <Text style={styles.btnPasswordText}>Показати</Text>
+                  ) : (
+                    <Text style={styles.btnPasswordText}>Скрити</Text>
+                  )}
+                </TouchableOpacity>
               </View>
               <TouchableOpacity
                 style={styles.btn}
@@ -115,7 +150,6 @@ const styles = StyleSheet.create({
   },
   form: {
     paddingTop: 32,
-    // paddingBottom: 144,
     paddingHorizontal: 16,
     backgroundColor: "#FFFFFF",
     borderBottomLeftRadius: 0,
@@ -123,11 +157,12 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
 
-    ...Platform.select({ ios: {}, android: {} }),
+    // ...Platform.select({ ios: {}, android: {} }),
   },
   title: {
     color: "#212121",
     fontSize: 30,
+    lineHeight: 35,
     fontFamily: "Roboto-Medium",
     textAlign: "center",
   },
@@ -145,6 +180,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Roboto-Regular",
   },
+  btnPasswordText: {
+    fontSize: 16,
+    lineHeight: 19,
+    color: "#1B4371",
+    fontFamily: "Roboto-Regular",
+  },
+  btnPassword: {
+    position: "absolute",
+    right: 16,
+    paddingTop: 16,
+  },
   btn: {
     backgroundColor: "#FF6C00",
     borderRadius: 100,
@@ -156,6 +202,7 @@ const styles = StyleSheet.create({
   btnTitle: {
     color: "#FFFFFF",
     fontSize: 16,
+    lineHeight: 19,
     fontFamily: "Roboto-Regular",
   },
 });
